@@ -1,2 +1,2 @@
-# BoraC-lg-nProje
+# Bora_Crazy_Proje
 BoranınProje
