@@ -1,2 +1,2 @@
-# Bora_Crazy_Proje
-BoranınProje
+# Horror_Game
+
