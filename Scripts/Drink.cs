@@ -25,7 +25,7 @@ public class Drink : MonoBehaviour
     void OnTriggerEnter(Collider other)
     {
         // oyuncunun içeceğin tetik alanına girip girmediğini kontrol eder
-        if (other.CompareTag("Player"))
+        if (other.gameObject.CompareTag("Player"))
         {
             is_over_drink = true;
         }
@@ -33,7 +33,7 @@ public class Drink : MonoBehaviour
 
     void OnTriggerExit(Collider other)
     {
-        if (other.CompareTag("Player"))
+        if (other.gameObject.CompareTag("Player"))
         {
             is_over_drink = false;
         }
