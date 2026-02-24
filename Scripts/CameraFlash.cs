@@ -3,6 +3,9 @@ using System.Collections;
 
 public class CameraFlash : MonoBehaviour
 {
+    public RenderTexture cameraView;
+    public GameObject battery_ui;
+    public Camera screen;
     public Light flashLight;
     public Light BatteryLight;
     public float max_intensity = 1000f;
@@ -37,11 +40,15 @@ public class CameraFlash : MonoBehaviour
         {
             // eğer flaş hakkı yoksa batarya ışığı yansın
             BatteryLight.gameObject.SetActive(true);
+            screen.gameObject.SetActive(false);
+            battery_ui.gameObject.SetActive(true);
         }
         else
         {
             // flaş hakkını geri kazanırsa tekrar ışık sönsün
             BatteryLight.gameObject.SetActive(false);
+            battery_ui.gameObject.SetActive(false);
+            screen.gameObject.SetActive(true);
         }
     }
     // kodu beklet
@@ -52,6 +59,7 @@ public class CameraFlash : MonoBehaviour
     IEnumerator WorldFlash()
     {
         // flaşı çalıştır ve oyuncuyu cooldowna sok
+        bool taken_shot = false;
         in_cooldown = true;
         flashLight.gameObject.SetActive(true);
         
@@ -62,6 +70,11 @@ public class CameraFlash : MonoBehaviour
             float percent = elapsed / flash_duration;
 
             flashLight.intensity = max_intensity * intensity_curve.Evaluate(percent);
+            if(flashLight.intensity >= max_intensity && !taken_shot)
+            {
+                TakeSnapshot();
+                taken_shot = true;
+            }
             yield return null;
         }
         // flaş hakkını azalt
@@ -70,5 +83,36 @@ public class CameraFlash : MonoBehaviour
 
         yield return new WaitForSeconds(cooldown - flash_duration);
         in_cooldown = false;
+    }
+
+    public void TakeSnapshot()
+    {
+        screen.Render(); 
+
+        RenderTexture.active = cameraView;
+        Texture2D screenshot = new Texture2D(cameraView.width, cameraView.height, TextureFormat.RGB24, false);
+        screenshot.ReadPixels(new Rect(0, 0, cameraView.width, cameraView.height), 0, 0);
+
+        RenderTexture.active = cameraView;
+
+        screenshot.ReadPixels(new Rect(0, 0, cameraView.width, cameraView.height), 0, 0);
+        screenshot.Apply();
+
+        RenderTexture.active = null;
+
+        byte[] bytes = screenshot.EncodeToPNG();
+
+        string folderPath = Path.Combine(Application.persistentDataPath, "Screenshots");
+        if (!Directory.Exists(folderPath)) 
+            Directory.CreateDirectory(folderPath);
+    
+        string fileName = "Snap_" + System.DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss") + ".png";
+        string filePath = Path.Combine(folderPath, fileName);
+
+        File.WriteAllBytes(filePath, bytes);
+
+        Debug.Log("Screenshot saved to: " + filePath);
+    
+        Destroy(screenshot);
     }
 }
