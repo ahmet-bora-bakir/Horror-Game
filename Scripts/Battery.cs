@@ -25,7 +25,7 @@ public class Battery : MonoBehaviour
     void OnTriggerEnter(Collider other)
     {
         // oyuncunun bataryanın tetik alanına girip girmediğini kontrol eder
-        if (other.CompareTag("Player"))
+        if (other.gameObject.CompareTag("Player"))
         {
             is_over_battery = true;
         }
@@ -33,7 +33,7 @@ public class Battery : MonoBehaviour
 
     void OnTriggerExit(Collider other)
     {
-        if (other.CompareTag("Player"))
+        if (other.gameObject.CompareTag("Player"))
         {
             is_over_battery = false;
         }
