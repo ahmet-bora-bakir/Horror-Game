@@ -1,12 +1,13 @@
 using UnityEngine;
 using System.Collections;
+using System.IO;
 
 public class CameraFlash : MonoBehaviour
 {
     public RenderTexture cameraView;
+    public Light flashLight;
     public GameObject battery_ui;
     public Camera screen;
-    public Light flashLight;
     public Light BatteryLight;
     public float max_intensity = 1000f;
     public float flash_duration = 0.2f;
@@ -62,7 +63,7 @@ public class CameraFlash : MonoBehaviour
         bool taken_shot = false;
         in_cooldown = true;
         flashLight.gameObject.SetActive(true);
-        
+
         float elapsed = 0f;
         while (elapsed < flash_duration)
         {
@@ -84,35 +85,34 @@ public class CameraFlash : MonoBehaviour
         yield return new WaitForSeconds(cooldown - flash_duration);
         in_cooldown = false;
     }
-
+    
     public void TakeSnapshot()
     {
-        screen.Render(); 
+    screen.Render(); 
 
-        RenderTexture.active = cameraView;
-        Texture2D screenshot = new Texture2D(cameraView.width, cameraView.height, TextureFormat.RGB24, false);
-        screenshot.ReadPixels(new Rect(0, 0, cameraView.width, cameraView.height), 0, 0);
+    RenderTexture.active = cameraView;
+    Texture2D screenshot = new Texture2D(cameraView.width, cameraView.height, TextureFormat.RGB24, false);
+    screenshot.ReadPixels(new Rect(0, 0, cameraView.width, cameraView.height), 0, 0);
 
-        RenderTexture.active = cameraView;
+    RenderTexture.active = cameraView;
 
-        screenshot.ReadPixels(new Rect(0, 0, cameraView.width, cameraView.height), 0, 0);
-        screenshot.Apply();
+    screenshot.ReadPixels(new Rect(0, 0, cameraView.width, cameraView.height), 0, 0);
+    screenshot.Apply();
 
-        RenderTexture.active = null;
+    RenderTexture.active = null;
 
-        byte[] bytes = screenshot.EncodeToPNG();
+    byte[] bytes = screenshot.EncodeToPNG();
 
-        string folderPath = Path.Combine(Application.persistentDataPath, "Screenshots");
-        if (!Directory.Exists(folderPath)) 
-            Directory.CreateDirectory(folderPath);
+    string folderPath = Path.Combine(Application.persistentDataPath, "Screenshots");
+    if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
     
-        string fileName = "Snap_" + System.DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss") + ".png";
-        string filePath = Path.Combine(folderPath, fileName);
+    string fileName = "Snap_" + System.DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss") + ".png";
+    string filePath = Path.Combine(folderPath, fileName);
 
-        File.WriteAllBytes(filePath, bytes);
+    File.WriteAllBytes(filePath, bytes);
 
-        Debug.Log("Screenshot saved to: " + filePath);
+    Debug.Log("Screenshot saved to: " + filePath);
     
-        Destroy(screenshot);
+    Destroy(screenshot);
     }
 }
