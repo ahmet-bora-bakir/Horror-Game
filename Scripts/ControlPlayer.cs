@@ -2,16 +2,17 @@ using UnityEngine;
 
 public class ControlPlayer : MonoBehaviour
 {
+    public LayerMask ground;
     public Transform playerCamera;
     private Rigidbody rb;
     private float xRotation = 0f;
     public CameraFlash camera_item;
     public FlashlightScript flashlight_item;
-
     public Animator CouchAnim;
     private CapsuleCollider player_collider;
     [Header("Kontrol değişkenleri")]
     public bool can_look = true;
+    public bool is_hiding = false;
     public bool can_sprint = true;
     public bool can_crouch = true;
     public bool is_grounded = false;
@@ -20,12 +21,17 @@ public class ControlPlayer : MonoBehaviour
     public float speed;
     public float normal_speed = 6f;
     public float sprint_speed = 10f;
+    public float stamina = 10f;
+    public float drainstamina = 1f;
+    public float regenstamina = 1f;
+    public bool is_tired = false;
     public float crouch_speed = 3f;
     public float stop_smoothness = 10f;
-    public float mouse_sensitivity = 10000f;
+    public float mouse_sensitivity = 5f;
     public float jump_force = 5.0f;
     [Header("Eğilme")]
     // bazı sorunlar oldu o yüzden daha eklemedim
+    public bool can_stand = true;
     public float normal_height;
     public float crouch_height = 1.0f;
     public float crouch_transition = 10f;
@@ -35,7 +41,6 @@ public class ControlPlayer : MonoBehaviour
     // çıkabileceği merdiven yüksekliği
     public float step_height = 0.4f;
     public float step_smoothness = 2f;
-
     void Start()
     {
         rb = GetComponent<Rigidbody>();
@@ -44,20 +49,20 @@ public class ControlPlayer : MonoBehaviour
         normal_center = player_collider.center;
         // Mouse imlecini kilitle
         Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
     }
 
     void Update()
     {
         // Kamerayı mouse ile ayarlama
-        float mouse_X = Input.GetAxis("Mouse X") * mouse_sensitivity * Time.deltaTime;
-        float mouse_Y = Input.GetAxis("Mouse Y") * mouse_sensitivity * Time.deltaTime;
+        float mouse_X = Input.GetAxis("Mouse X") * mouse_sensitivity;
+        float mouse_Y = Input.GetAxis("Mouse Y") * mouse_sensitivity;
 
+        // 2. Vertical Rotation (Look Up/Down)
         xRotation -= mouse_Y;
         xRotation = Mathf.Clamp(xRotation, -90f, 90f);
         playerCamera.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
 
-        // Sol sağ haraket
+        // 3. Horizontal Rotation (Turn Body)
         transform.Rotate(Vector3.up * mouse_X);
 
         //azıcık daha sorun var. ama temel olarak çalışıyor
@@ -67,12 +72,14 @@ public class ControlPlayer : MonoBehaviour
         // hareket şekline göre hızı ayarlama 
         HandleSpeed();
         // Zıplama
-        is_grounded = Physics.Raycast(transform.position, Vector3.down, normal_height + 0.1f);
-        if (Input.GetButtonDown("Jump") && is_grounded)
+        can_stand = !Physics.Raycast(transform.position, Vector3.up, 1f);
+
+        is_grounded = Physics.CheckSphere(transform.position + (Vector3.down * 0.1f), 0.2f);
+        /*if (Input.GetButtonDown("Jump") && is_grounded)
         {
             rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0, rb.linearVelocity.z);
             rb.AddForce(Vector3.up * jump_force, ForceMode.VelocityChange);
-        }
+        }*/
 
         HandleItemSwitch();
     }
@@ -105,15 +112,22 @@ public class ControlPlayer : MonoBehaviour
     {
         // eğer oyuncu sol shift ve w ya basarsa ve oyuncu koşabilir durumdysa(eğilmiyorsa vs.)
         // oyuncu kşma hızına geçsin + eğilemesin
-        if (Input.GetKey(KeyCode.LeftShift) && can_sprint && Input.GetKey(KeyCode.W) && !is_hitting_wall)
+        if (Input.GetKey(KeyCode.LeftShift) && can_sprint && Input.GetKey(KeyCode.W) && !is_hitting_wall && can_stand)
         {
             speed = sprint_speed;
+            stamina -= drainstamina * Time.deltaTime;
+            if(stamina <= 0)
+            {
+                can_sprint = false;
+                is_tired = true;
+            }
             can_crouch = false;
         }
         // aynısı ama c tuşuna basıp eğilebiliyorsa
         // oyuncu yavaşlasın ve eğilsin + koşamasın
         else if (Input.GetKey(KeyCode.C) && can_crouch)
         {
+            stamina = Mathf.Clamp(stamina + regenstamina * Time.deltaTime, 0, 10f);
             speed = crouch_speed;
             can_sprint = false;
             Crouch();
@@ -121,10 +135,30 @@ public class ControlPlayer : MonoBehaviour
         // normal hızını tutsun
         else
         {
-            speed = normal_speed;
-            can_crouch = true;
-            can_sprint = true;
-            Stand();
+            if (can_stand)
+            {
+                if (is_tired)
+                {
+                    stamina = Mathf.Clamp(stamina + regenstamina * Time.deltaTime, 0, 10f);
+                    if (stamina >= 10f)
+                    {
+                        is_tired = false;
+                        can_sprint = true;
+                    }
+                }
+                if (stamina <= 10f && stamina > 0 && !is_tired)
+                {
+                    can_sprint = true;
+                    stamina = Mathf.Clamp(stamina + regenstamina * Time.deltaTime, 0, 10f);
+                }
+                speed = normal_speed;
+                can_crouch = true;
+                Stand();
+            }
+            else
+            {
+                stamina = Mathf.Clamp(stamina + regenstamina * Time.deltaTime, 0, 10f);
+            }
         }
     }
 
@@ -135,12 +169,17 @@ public class ControlPlayer : MonoBehaviour
         float move_horizontal = Input.GetAxisRaw("Horizontal");
 
         Vector3 targetDirection = (transform.forward * move_vertical) + (transform.right * move_horizontal);
-        Vector3 targetVelocity = targetDirection * speed;
-        
+        targetDirection = targetDirection.normalized;
+
         Vector3 currentVelocity = rb.linearVelocity;
-        Vector3 velocityChange = Vector3.Lerp(currentVelocity, new Vector3(targetVelocity.x, currentVelocity.y, targetVelocity.z), stop_smoothness * Time.fixedDeltaTime);
-        
-        rb.linearVelocity = velocityChange;
+        Vector3 targetVelocity = targetDirection * speed;
+        Vector3 velocityChange = targetVelocity - currentVelocity;
+
+        velocityChange.x = Mathf.Clamp(velocityChange.x, -stop_smoothness, stop_smoothness);
+        velocityChange.z = Mathf.Clamp(velocityChange.z, -stop_smoothness, stop_smoothness);
+        velocityChange.y = 0; 
+
+        rb.AddForce(velocityChange, ForceMode.VelocityChange);
 
         // karakter merdiven çıkacağı zaman
         StepClimb();
@@ -192,5 +231,19 @@ public class ControlPlayer : MonoBehaviour
     {
         camera_item.gameObject.SetActive(false);
         flashlight_item.gameObject.SetActive(false);
+    }
+    void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.CompareTag("HidingSpot"))
+        {
+            is_hiding = true;
+        }
+    }
+    void OnTriggerExit(Collider other)
+    {
+        if(other.gameObject.CompareTag("HidingSpot"))
+        {
+            is_hiding = false;
+        }
     }
 }
