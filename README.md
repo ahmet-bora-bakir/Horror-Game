@@ -33,7 +33,7 @@ Bu depo, geliştirme süreci devam eden bir korku oyunu projesine aittir. Aşağ
 ### 🤖 Yapay Zeka (AI)
 - [ ] **Uzaylı AI:** Temel devriye, algılama ve kovalama algoritmaları yazılacak(Askerler ile benzer olacak.).
 - [ ] **Göz Takibi:** Karakterin belirli objelere veya oyuncuya göz takibi (look-at) yapması sağlanacak.
-- [ ] **Oyuncunun saklanma yerlerini yavaş yavaş öğrenecek.
+- [ ] **Derin Öğrenme:** Oyuncunun saklanma yerlerini ve düzenini yavaş yavaş öğrenip adapte olacak.
 ### 🔊 Ses
 - [ ] **SFX:** Yürüme, koşma ve karakter etkileşim sesleri eklenecek.
 - [ ] **Seslendirme:** Gerekli görülürse asker ve hikaye seslendirmeleri yapılacak.
