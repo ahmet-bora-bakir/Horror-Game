@@ -1,6 +1,6 @@
 # Horror_Game
 
-Eksikler:  
+##Eksikler:  
   Hareket:
   - Zıplarken havada fazla asılı kalıyor. Animasyon olayları tamamlanıcak. Duvara "çarpma" olayı sorunlu çalışıyor.  
   Çevre:
