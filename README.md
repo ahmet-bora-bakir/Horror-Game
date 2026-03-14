@@ -21,4 +21,6 @@ Eksikler:
   - Yürüme, Koşma sesleri eksik, asker sesleri eksik, seslendirme yapılacaksa eksik  
   Ekstra:
   - Oyuncunun oyun içinde çektiği fotoğrafları kaydetmesi sağlandı. Bu fotoğrafları inceleyebilmesi için bir menü geliştirilecek.
+  AI:
+  - Uzaylı yapay zekası yok, gerçek hayatta göz takibi yapılabilir.
   
