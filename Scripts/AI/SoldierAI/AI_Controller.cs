@@ -14,14 +14,15 @@ public class AI_Controller : MonoBehaviour
     public float newPatrolTime;
 
     private Vector3 destination;
-    private bool destinationFlag = false;
+    private bool destinationFlag;
 
     public Vector2[] areaBorders;
 
     private Quaternion rightLook;
     private Quaternion leftLook;
     public float quaternionLookAngle;
-    private bool isWaiting = false;
+    
+    private bool isWaiting;
 
     public float stoppingDistance;
 
@@ -30,6 +31,9 @@ public class AI_Controller : MonoBehaviour
 
     void Start()
     {
+        destinationFlag = false;
+        isWaiting = false;
+        
         soldierAnimation = GetComponent<Animator>();
 
         agent.stoppingDistance = stoppingDistance;
